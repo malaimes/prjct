@@ -192,8 +192,8 @@ gulp.task('build', (cb) => {
 
 gulp.task('watch', () => {
   gulp.watch('src/css/**/*.styl', ['styles']);
-  gulp.watch(['src/js/**/*.js', '!src/js/vendor.js'], ['scripts:app', 'lint']);
-  gulp.watch('!src/js/vendor.js', ['scripts:vendor']);
+  gulp.watch(['src/js/**/*.js', 'src/js/vendor.js'], ['scripts:app', 'lint']);
+  gulp.watch('src/js/vendor.js', ['scripts:vendor']);
   gulp.watch('src/index.html', ['static:html']);
   gulp.watch('src/templates/**/*.hbs', ['templates']);
 });

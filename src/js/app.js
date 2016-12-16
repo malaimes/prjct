@@ -1,6 +1,2 @@
 console.log('Hello world!!!');
-console.log(
-  templates.main({
-    name: 'Jhon'
-  })
-);
+document.getElementById('root').innerHTML = templates['main']();
