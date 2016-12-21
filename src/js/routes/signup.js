@@ -1,36 +1,96 @@
-function signup() {
-  // createUserWithEmailAndPassword
+function signup(ctx, next) {
+  if (ctx.user) {
+    return page.redirect('/profile');
+  }
+
   render('signup');
 
-  let form = document.getElementById('signup-form');
-  let {email, password, password_confirm} = form;
-  // let email = form.email;
-  // let password = form.password;
-  // let password_confirm = form.password_confirm;
+  const signupForm      = document.forms['signup-form'];
+  const errorsContainer = qs('#errors', signupForm);
+  const button = qs('.btn', signupForm);
+  const loadingClass = 'is-loading';
+  const auth            = firebase.auth();
 
-  form.addEventListener('submit', submitHandler);
+  function renderErrors(errors = []) {
+    return errors.map(err => {
+      return `
+        <li class="list-group-item list-group-item-danger">
+          <span>${err}</span>
+        </li>
+      `;
+    }).join('');
+  }
 
-  // 1. No server error response
-  // 2. No action for success method fot create user
-  // 3. No info-error for client-side validation
+  function showErrors(errors = []) {
+    errorsContainer.innerHTML = renderErrors(errors);
+    errorsContainer.hidden = false;
+  }
 
-  function submitHandler(e) {
+  function hideErrors() {
+    errorsContainer.hidden = true;
+    errorsContainer.innerHTML = '';
+  }
 
-    // 1. @
-    // 1.5 .
-    // 2. pass.length > 6
-    // 3. pass === pass.confirm
+  function setLoadingState() {
+    button.disabled = true;
+    signupForm.classList.add(loadingClass);
+  }
 
-    if (email.value.indexOf('@') === -1 || email.value.indexOf('.') === -1 || password.value.length < 6 || (password.value !== password_confirm.value)) {
-      alert('Error credentials');
-    }  else {
-      firebase.auth().createUserWithEmailAndPassword(email.value, password.value)
-        .catch( (error) => {
-          alert(error.message);
-        });
+  function unsetLoadingState() {
+    button.disabled = false;
+    signupForm.classList.remove(loadingClass);
+  }
+
+
+  function onUserCreated(user) {
+    unsetLoadingState();
+    const usersRef = firebase.database().ref(`users/${user.uid}`);
+    // const userData = pick(user, ['uid', 'email', 'displayName', 'photoURL']);
+    // usersRef.set(userData)
+    //   .then(() => {
+    // user.sendEmailVerification();
+    page('/profile');
+      // });
+    console.log('Success');
+
+  }
+
+  function onUserCreationError(error) {
+    unsetLoadingState();
+    let responseErrors = [];
+    responseErrors.push(error.message);
+    return showErrors(responseErrors);
+  }
+
+  function handler(e) {
+    const errors = [];
+    const form = e.target;
+    console.log(form.elements);
+    const { email, password, password_confirm } = form.elements;
+
+    if (email.value.indexOf('@') === -1) {
+      errors.push('Email is invalid');
     }
+
+    if (!password.value.length) {
+      errors.push('Please enter password');
+    } else if (password.value !== password_confirm.value) {
+      errors.push('Password is incorrect');
+    }
+
+    if (errors.length) {
+      return showErrors(errors);
+    } 
+
+    hideErrors();
+    setLoadingState();
+    auth
+      .createUserWithEmailAndPassword(email.value, password.value)
+      .then(onUserCreated)
+      .catch(onUserCreationError);
 
     e.preventDefault();
   }
 
+  signupForm.addEventListener('submit', handler);
 }
