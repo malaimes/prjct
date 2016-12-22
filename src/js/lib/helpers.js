@@ -16,3 +16,13 @@ const qsa = (selector, context = document) =>
     context.querySelectorAll(selector)
   );
   
+
+/**
+ * Chek if object is a DOM element
+ * @param  {Object}
+ * @return {Boolean}
+ */
+const isDomElement = (object) => object instanceof HTMLElement;
+
+
+const noop = () => {};
