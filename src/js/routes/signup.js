@@ -10,9 +10,8 @@ function signup(ctx, next) {
   const button = qs('.btn', signupForm);
   const loadingClass = 'is-loading';
   const auth            = firebase.auth();
-
   function renderErrors(errors = []) {
-    return errors.map(err => {
+    return [].concat(errors).map(err => {
       return `
         <li class="list-group-item list-group-item-danger">
           <span>${err}</span>
@@ -32,12 +31,12 @@ function signup(ctx, next) {
   }
 
   function setLoadingState() {
-    button.disabled = true;
+    button.setAttribute('disabled', 'disabled');
     signupForm.classList.add(loadingClass);
   }
 
   function unsetLoadingState() {
-    button.disabled = false;
+    button.removeAttribute('disabled', 'disabled');
     signupForm.classList.remove(loadingClass);
   }
 
@@ -57,9 +56,7 @@ function signup(ctx, next) {
 
   function onUserCreationError(error) {
     unsetLoadingState();
-    let responseErrors = [];
-    responseErrors.push(error.message);
-    return showErrors(responseErrors);
+    return showErrors(error);
   }
 
   function handler(e) {
@@ -77,7 +74,7 @@ function signup(ctx, next) {
     } else if (password.value !== password_confirm.value) {
       errors.push('Password is incorrect');
     }
-
+    e.preventDefault();
     if (errors.length) {
       return showErrors(errors);
     } 
@@ -89,7 +86,6 @@ function signup(ctx, next) {
       .then(onUserCreated)
       .catch(onUserCreationError);
 
-    e.preventDefault();
   }
 
   signupForm.addEventListener('submit', handler);
