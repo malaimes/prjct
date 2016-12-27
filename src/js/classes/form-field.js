@@ -60,12 +60,28 @@ const FormField = (function() {
       }
 
       this._setupValidator();
+      this._bindEvents();
+    }
 
-      console.log(this);
+    isValid() {
+      return this._isValid;
     }
 
     validate() {
+      const value = this.control.value;
+      this.resetState();
 
+      // discard validation if field is not required and has empty value
+      if (value === '' && !this._required) return true;
+      const result = this._validate(value);
+
+      if (result === true) {
+        this.setValidState();
+      } else {
+        this.setErrorState(result);
+      }
+
+      return result;
     }
 
     setValidState() {
@@ -123,7 +139,7 @@ const FormField = (function() {
           }
         });
       }
-      if (typeof customValidator === 'function') {
+      if (typeof customValidator === 'function' && customValidator !== noop) {
         this.rules.push({
           name: 'custom',
           fn: customValidator
@@ -161,7 +177,31 @@ const FormField = (function() {
       this.errorElement.className = this.props.errorElementClass;
     }
 
+    _bindEvents() {
+      const {
+        resetOnFocus,
+        validateOnInput,
+        validateOnBlur,
+        autoValidate
+      } = this.props;
+
+      if (!autoValidate) return;
+
+      if (resetOnFocus) {
+        this.control.addEventListener('focus', () => this.resetState());
+      }
+
+      if (validateOnInput) {
+        this.control.addEventListener('input', () => this.validate());
+      }
+
+      if (validateOnBlur) {
+        this.control.addEventListener('blur', () => this.validate());
+      }
+    }
+
   }
+
 
   FormField.defaults = {
     errorClass: 'has-error',

@@ -26,3 +26,19 @@ const isDomElement = (object) => object instanceof HTMLElement;
 
 
 const noop = () => {};
+
+/**
+ * Creates an object composed of the picked object properties.
+ * @param  {Object} object source object
+ * @param  {Array}  props  array of properties that should be picked
+ * @return {Object}
+ */
+const pick = (object, props) => {
+  return props.reduce((result, prop) => {
+    const value = object[prop];
+    if (typeof value !== 'undefined') {
+      result[prop] = value;
+    }
+    return result;
+  }, {});
+};
