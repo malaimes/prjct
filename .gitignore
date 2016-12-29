@@ -29,3 +29,7 @@ nbproject
 node_modules
 bower_components
 public
+
+
+# Credentials to ignore
+src/js/firebase.config.js

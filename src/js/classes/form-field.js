@@ -39,8 +39,7 @@ const FormField = (function() {
   };
 
   class FormField {
-
-    constructor(element,props = {}) {
+    constructor(element, props = {}) {
       this.element   = isDomElement(element) ? element : qs(element);
       this.props     = Object.assign({}, FormField.defaults, props);
       this.rules     = [];
@@ -61,6 +60,7 @@ const FormField = (function() {
 
       this._setupValidator();
       this._bindEvents();
+      // console.log(this);
     }
 
     isValid() {
@@ -108,38 +108,39 @@ const FormField = (function() {
     resetState() {
       if (this._isValid === null && this._hasError === null) return;
 
-      const {errorClass, validClass} = this.props;
+      const { validClass, errorClass } = this.props;
       this.element.classList.remove(validClass);
       this.element.classList.remove(errorClass);
 
       if (this.errorElement && this.errorElement.parentNode) {
         this.element.removeChild(this.errorElement);
         this.errorElement.innerHTML = '';
-      }  
+      }
 
-      this.errors    = [];
+      this.errors = [];
+
       this._isValid  = false;
-      this._hasError = false;   
+      this._hasError = false;
     }
 
     _setupValidator() {
-      const {validate, customValidator, errorMessages} = this.props;
+      const { validate, customValidator, errorMessages } = this.props;
       const type = typeof validate;
 
       if (type === 'string' || Array.isArray(validate)) {
         [].concat(validate).forEach(str => {
-          const {name, params} = parseRuleFromString(str);
+          const { name, params } = parseRuleFromString(str);
           const fn = validationRules[name];
           if (fn) {
-            this.rules.push({name, fn, params});
+            this.rules.push({ name, fn, params });
           }
-
           if (name === 'required') {
             this._required = true;
           }
         });
       }
-      if (typeof customValidator === 'function' && customValidator !== noop) {
+
+      if (typeof customValidator === 'function') {
         this.rules.push({
           name: 'custom',
           fn: customValidator
@@ -179,10 +180,10 @@ const FormField = (function() {
 
     _bindEvents() {
       const {
-        resetOnFocus,
-        validateOnInput,
-        validateOnBlur,
-        autoValidate
+          resetOnFocus,
+          validateOnInput,
+          validateOnBlur,
+          autoValidate
       } = this.props;
 
       if (!autoValidate) return;
@@ -199,16 +200,14 @@ const FormField = (function() {
         this.control.addEventListener('blur', () => this.validate());
       }
     }
-
   }
-
 
   FormField.defaults = {
     errorClass: 'has-error',
     validClass: 'has-success',
     errorElementClass: 'text-danger',
     control: 'input',
-    customValidator: noop,
+    customValidator: null,
     errorMessages: {},
     validate: null
   };

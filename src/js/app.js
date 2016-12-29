@@ -2,13 +2,17 @@
 
 (function() {
 
-  firebase.initializeApp({
-    apiKey: 'AIzaSyA4YEDMVV9HD6YyopGVMwl9B50IRMH-HB8',
-    authDomain: 'instaprjct-1b433.firebaseapp.com',
-    databaseURL: 'https://instaprjct-1b433.firebaseio.com',
-    storageBucket: 'instaprjct-1b433.appspot.com',
-    messagingSenderId: '1027774856076'
-  });
+
+  //=require 'firebase.config.js'
+
+  try {
+    firebase.initializeApp(firebaseConfig || {});
+  } catch (err) {
+    alert(
+      `Please, add src/js/firebase.config.js file with the following content:
+      "const firebaseConfig = { ... };"`
+    );
+  }
 
   //=require 'lib/*.js'
   //=require 'classes/*.js'
@@ -35,6 +39,7 @@
   page('/logout', logout);
   page('/signup', signup);
   page('/profile', profile);
+  page('/profile/edit', profileEdit);
   page('*', render404);
 
   render('preloader');
@@ -46,4 +51,3 @@
   });
 
 } ());
-
