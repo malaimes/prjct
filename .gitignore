@@ -24,6 +24,7 @@ nbproject
 *.sublime-project
 *.sublime-workspace
 .idea
+.gitignore
 
 # Folders to ignore
 node_modules
