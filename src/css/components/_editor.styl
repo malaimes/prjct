@@ -75,6 +75,10 @@
   &__caption
     margin 8px 0
     display none
+  
+  &__address
+    margin 8px 0
+    display none
 
   &__presets
     position relative
@@ -192,6 +196,7 @@
     {$this}__canvas-container,
     {$this}__caption,
     {$this}__presets,
+    {$this}__address,
     {$this}__reset,
     {$this}__upload
       display block
@@ -206,7 +211,8 @@
   &.is-uploading
     {$this}__controls,
     {$this}__presets,
-    {$this}__caption
+    {$this}__caption,
+    {$this}__address
       display none
 
     {$this}__progress

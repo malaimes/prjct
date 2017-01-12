@@ -9,16 +9,29 @@ class Editor {
     this.triggerUpload    = qs(this.props.triggerUpload, this.root);
     this.progressBar      = qs(this.props.progressBar, this.root);
     this.caption          = qs(this.props.caption, this.root);
+    this.place            = qs(this.props.place, this.root);
+    this.postAddress = places({
+      container: this.place,
+      language: 'en',
+      type: 'city',
+      aroundLatLngViaIP: false,
+      templates: {
+        value: function(suggestion) {
+          return suggestion.name;
+        }
+      }
+    });
     this.file             = null;
+    this.address          = null;
     this.filter           = null;
     this._processing      = false;
-
     this.resetFilter       = this.resetFilter.bind(this);
     this.save              = this.save.bind(this);
     this._onFileChange     = this._onFileChange.bind(this);
     this._onFilterClick    = this._onFilterClick.bind(this);
     this._onUploadProgress = this._onUploadProgress.bind(this);
-
+    this._onAddressChange = this._onAddressChange.bind(this);
+    this._onAddressClear = this._onAddressClear.bind(this);
     this.triggerReset.style.display = 'none';
 
     this._bindEvents();
@@ -55,8 +68,44 @@ class Editor {
     this.triggerReset.style.display = 'none';
   }
 
+  // get caption and add it to the post as first comment
+  _getComments() {
+    const caption = this.caption.value.trim();
+
+    if (!caption) return {};
+
+    const { uid, username } = this.props.currentUser;
+    const commentId = generateID('comment-');
+
+    return {
+      [commentId]: {
+        id: commentId,
+        value: caption,
+        author: username,
+        authorId: uid,
+        created: moment().toJSON()
+      }
+    };
+  }
+
+  _getAddress() {
+    const address = this.address;
+    if (!address) return {};
+    return address;
+  }
+
+  _onAddressChange(e) {
+    this.address = e.suggestion.value;
+    console.log(this.address);
+  }
+
+  _onAddressClear(e) {
+    this.address = null;
+    console.log(this.address);
+  }  
+
   save() {
-    const id          = generateID('', 12);
+    const id          = generateID('post-');
     const user        = firebase.auth().currentUser;
     const dbPath      = `/posts/${id}`;
     const storagePath = `/pictures/${user.uid}/${id}.jpg`;
@@ -75,7 +124,6 @@ class Editor {
 
     // show progress while uploading
     uploadTask.on('state_changed', this._onUploadProgress);
-
     uploadTask
       // create entry in firebase database after successfull upload
       .then(snapshot => {
@@ -85,9 +133,15 @@ class Editor {
           author: user.uid,
           created: timeCreated,
           url: downloadURLs[0],
-          caption: this.caption.value.trim(),
           filterName: this.filter,
-          storagePath: fullPath
+          storagePath: fullPath,
+          dimensions: {
+            width: this.caman.width,
+            height: this.caman.height
+          },
+          location: this._getAddress(),
+          comments: this._getComments()
+          
         });
       })
       // hide spinner and progress bar
@@ -104,7 +158,17 @@ class Editor {
   }
 
   _bindEvents() {
+    this.triggerReset.addEventListener('click', this.resetFilter);
+    this.triggerUpload.addEventListener('click', this.save);
     this.fileInput.addEventListener('change', this._onFileChange);
+    this.postAddress.on('change', this._onAddressChange);
+    this.postAddress.on('clear', this._onAddressClear);
+    delegate(
+      this.filtersContainer,
+      'click',
+      '[data-filter]',
+      this._onFilterClick
+    );
   }
 
   _onFileChange(e) {
@@ -112,8 +176,11 @@ class Editor {
     this._initEditor();
   }
 
-  _onFilterChange() {
-    // TODO
+  _onFilterClick(e) {
+    const target = e.delegateTarget;
+    const { filter } = target.dataset;
+    if (!filter) return;
+    this.applyFilter(filter);
   }
 
   _onUploadProgress(snapshot) {
@@ -122,7 +189,12 @@ class Editor {
   }
 
   _highlightActiveFilter() {
-    // TODO
+    const { activeClass } = this.props;
+    const prevActive      = qs(`.${activeClass}`, this.filtersContainer);
+    const nextActive      = qs(`[data-filter="${this.filter}"]`, this.filtersContainer);
+    prevActive && prevActive.classList.remove(activeClass); // the same as if (prevActive) prevActive.classList.remove(activeClass);
+    nextActive && nextActive.classList.add(activeClass);
+    this.triggerReset.style.display = '';
   }
 
   _toggleBusyState() {
@@ -142,7 +214,7 @@ class Editor {
   _initEditor() {
     const { hasImageClass, imageMaxSize } = this.props;
     const canvas = document.createElement('canvas');
-    const url = URL.createObjectURL(this.file);
+    const url    = URL.createObjectURL(this.file);
 
     if (this.canvas) {
       this.canvas.parentNode.replaceChild(canvas, this.canvas);
@@ -154,10 +226,8 @@ class Editor {
     this._toggleBusyState();
     this.caman = Caman(this.canvas, url, (caman) => {
       const { originalWidth, originalHeight } = caman;
-      const ratio = originalWidth / originalHeight;
-      const width = originalWidth > imageMaxSize
-        ? imageMaxSize
-        : originalWidth;
+      const ratio  = originalWidth / originalHeight;
+      const width  = originalWidth > imageMaxSize ? imageMaxSize : originalWidth;
       const height = Math.round(width / ratio);
 
       caman.resize({ width, height }).render();
@@ -165,10 +235,13 @@ class Editor {
       this._toggleBusyState();
       this.root.classList.add(hasImageClass);
     });
+
+
   }
 }
 
 Editor.defaults = {
+  currentUser: {},
   activeClass: 'is-active',
   busyClass: 'is-busy',
   hasImageClass: 'has-image',
@@ -180,6 +253,7 @@ Editor.defaults = {
   fileInput: 'input[type="file"]',
   progressBar: '.editor__progress .progress-bar',
   caption: '.editor__caption textarea',
+  place: '.editor__address input',
   imageMaxSize: 1200,
   onSave: noop,
   onError: noop

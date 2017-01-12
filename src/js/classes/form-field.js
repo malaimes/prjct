@@ -60,15 +60,20 @@ const FormField = (function() {
 
       this._setupValidator();
       this._bindEvents();
-      // console.log(this);
+
+      console.log(this);
     }
 
     isValid() {
-      return this._isValid;
+      return !this._hasError;
     }
 
+    /**
+     * Validate field
+     * @return {Boolean|String} true if valid or error message if invalid
+     */
     validate() {
-      const value = this.control.value;
+      const { value } = this.control;
       this.resetState();
 
       // discard validation if field is not required and has empty value
@@ -84,12 +89,6 @@ const FormField = (function() {
       return result;
     }
 
-    setValidState() {
-      if (this._isValid) return;
-      this.element.classList.add(this.props.validClass);
-      this._isValid = true;
-    }
-
     setErrorState(message) {
       if (this._hasError) return;
 
@@ -97,7 +96,9 @@ const FormField = (function() {
       this.element.classList.add(this.props.errorClass);
 
       if (this.errorElement) {
+        // show all errors
         // this.errorElement.innerHTML = this.errors.join('<br>');
+        // show only first error
         this.errorElement.innerHTML = this.errors[0];
         this.element.appendChild(this.errorElement);
       }
@@ -105,13 +106,21 @@ const FormField = (function() {
       this._hasError = true;
     }
 
+    setValidState() {
+      if (this._isValid) return;
+
+      this.element.classList.add(this.props.validClass);
+      this._isValid = true;
+    }
+
     resetState() {
       if (this._isValid === null && this._hasError === null) return;
 
-      const { validClass, errorClass } = this.props;
-      this.element.classList.remove(validClass);
+      const { errorClass, validClass } = this.props;
       this.element.classList.remove(errorClass);
+      this.element.classList.remove(validClass);
 
+      // unmount error element if mounted
       if (this.errorElement && this.errorElement.parentNode) {
         this.element.removeChild(this.errorElement);
         this.errorElement.innerHTML = '';
@@ -119,8 +128,37 @@ const FormField = (function() {
 
       this.errors = [];
 
-      this._isValid  = false;
-      this._hasError = false;
+      this._isValid = null;
+      this._hasError = null;
+    }
+
+    _setupErrorElement() {
+      if (this.errorElement) return;
+      this.errorElement = document.createElement('span');
+      this.errorElement.className = this.props.errorElementClass;
+    }
+
+    _bindEvents() {
+      const {
+        resetOnFocus,
+        validateOnInput,
+        validateOnBlur,
+        autoValidate
+      } = this.props;
+
+      if (!autoValidate) return;
+
+      if (resetOnFocus) {
+        this.control.addEventListener('focus', () => this.resetState());
+      }
+
+      if (validateOnInput) {
+        this.control.addEventListener('input', () => this.validate());
+      }
+
+      if (validateOnBlur) {
+        this.control.addEventListener('blur', () => this.validate());
+      }
     }
 
     _setupValidator() {
@@ -173,39 +211,16 @@ const FormField = (function() {
       };
     }
 
-    _setupErrorElement() {
-      this.errorElement = document.createElement('span');
-      this.errorElement.className = this.props.errorElementClass;
-    }
-
-    _bindEvents() {
-      const {
-          resetOnFocus,
-          validateOnInput,
-          validateOnBlur,
-          autoValidate
-      } = this.props;
-
-      if (!autoValidate) return;
-
-      if (resetOnFocus) {
-        this.control.addEventListener('focus', () => this.resetState());
-      }
-
-      if (validateOnInput) {
-        this.control.addEventListener('input', () => this.validate());
-      }
-
-      if (validateOnBlur) {
-        this.control.addEventListener('blur', () => this.validate());
-      }
-    }
   }
 
   FormField.defaults = {
     errorClass: 'has-error',
     validClass: 'has-success',
     errorElementClass: 'text-danger',
+    resetOnFocus: true,
+    validateOnInput: false,
+    validateOnBlur: true,
+    autoValidate: true,
     control: 'input',
     customValidator: null,
     errorMessages: {},

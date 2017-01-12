@@ -1,46 +1,28 @@
-function login(ctx) {
+function login(ctx, next) {
   if (ctx.user) {
     return page.redirect('/profile');
   }
 
-  render('login');
+  render('login', ctx);
 
-  const loginForm = document.forms['login-form'];
-  const {email, password} = loginForm.elements;
+  new VForm('#login-form', {
+    fields: {
+      'email': {
+        validate: ['required', 'email']
+      },
+      'password': {
+        validate: 'required'
+      }
+    },
+    onValid: (f) => {
+      const { email, password } = f.serialize();
 
-  const emailFF = new FormField(email.parentNode, {
-    validate: [
-      'required',
-      'email'
-    ],
-    resetOnFocus: true,
-    validateOnBlur: true,
-    autoValidate: true
-  });
-  const passwordFF = new FormField(password.parentNode, {
-    validate: [
-      'required'
-    ],
-    resetOnFocus: true,
-    validateOnBlur: true,
-    autoValidate: true
-  });
-
-  loginForm.addEventListener('submit', submitHandler);
-
-  function submitHandler(e) {
-    const auth = firebase.auth();
-
-    e.preventDefault();
-
-    emailFF.validate();
-    passwordFF.validate();
-
-    if (emailFF.isValid() && passwordFF.isValid()) {
-      auth
-        .signInWithEmailAndPassword(email.value, password.value)
-        .then((success) => page.redirect('/profile'))
-        .catch((error) => console.log(error));
+      firebase.auth()
+        .signInWithEmailAndPassword(email, password)
+        .then(() => {
+          page.redirect('/');
+        })
+        .catch(defaultErrorHandler);
     }
-  }
+  });
 }

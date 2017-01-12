@@ -1,5 +1,3 @@
-function profile(ctx) {
-  render('profile-show', {
-    profile: ctx.user
-  });
+function profile(ctx, next) {
+  render('profile-show', ctx);
 }

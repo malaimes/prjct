@@ -33,4 +33,39 @@
       .join(' ');
   });
 
+  Handlebars.registerHelper('formatDate', (dateString) => {
+    return moment(dateString).fromNow(true);
+  });
+
+  Handlebars.registerHelper('sortBy', sortBy);
+
+  Handlebars.registerHelper('ifCond', (v1, operator, v2, options) => {
+    switch (operator) {
+      case '==':
+        // eslint-disable-next-line eqeqeq
+        return (v1 == v2) ? options.fn(this) : options.inverse(this);
+      case '===':
+        return (v1 === v2) ? options.fn(this) : options.inverse(this);
+      case '!=':
+        // eslint-disable-next-line eqeqeq
+        return (v1 != v2) ? options.fn(this) : options.inverse(this);
+      case '!==':
+        return (v1 !== v2) ? options.fn(this) : options.inverse(this);
+      case '<':
+        return (v1 < v2) ? options.fn(this) : options.inverse(this);
+      case '<=':
+        return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+      case '>':
+        return (v1 > v2) ? options.fn(this) : options.inverse(this);
+      case '>=':
+        return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+      case '&&':
+        return (v1 && v2) ? options.fn(this) : options.inverse(this);
+      case '||':
+        return (v1 || v2) ? options.fn(this) : options.inverse(this);
+      default:
+        return options.inverse(this);
+    }
+  });
+
 } ());
